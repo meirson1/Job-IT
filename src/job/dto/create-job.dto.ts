@@ -1,5 +1,14 @@
-import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { JobSource } from '@prisma/client';
 
 export class CreateJobDto {
   @IsString()
@@ -14,11 +23,44 @@ export class CreateJobDto {
   @IsNotEmpty()
   location: string;
 
-  @IsNumber()
-  @IsOptional()
-  salary?: number;
-
   @IsString()
   @IsNotEmpty()
   companyName: string;
+
+  @IsNumber()
+  @IsOptional()
+  salaryMin?: number;
+
+  @IsNumber()
+  @IsOptional()
+  salaryMax?: number;
+
+  @IsString()
+  @IsOptional()
+  salaryCurrency?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  promoted?: boolean;
+
+  @IsString()
+  @IsOptional()
+  externalId?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  url: string;
+
+  @IsEnum(JobSource)
+  @IsNotEmpty()
+  source: JobSource;
+
+  @IsBoolean()
+  @IsOptional()
+  easyApply?: boolean;
+
+  @IsString({ each: true })
+  @IsOptional()
+  @IsArray()
+  tags?: string[];
 }
