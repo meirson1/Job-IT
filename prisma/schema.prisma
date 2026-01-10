@@ -9,11 +9,6 @@ datasource db {
 enum GlobalRole {
   USER
   ADMIN
-}
-
-enum CompanyRole {
-  OWNER
-  HR
   RECRUITER
 }
 
@@ -23,6 +18,37 @@ enum ApplicationStatus {
   INTERVIEW
   REJECTED
   HIRED
+}
+
+enum JobSource {
+  LINKEDIN
+  COMPANY_SITE
+  GREENHOUSE
+  LEVER
+  INDEED
+  OTHER
+}
+
+enum WorkplaceType {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  TEMP
+}
+
+enum ExperienceLevel {
+  INTERN
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
 }
 
 enum JobSource {

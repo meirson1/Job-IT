@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  FileTypeValidator,
   MaxFileSizeValidator,
   ParseFilePipe,
   Patch,
@@ -14,6 +13,14 @@ import {
 } from '@nestjs/common';
 import { UploadService } from './upload.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { GetFileQueryDto } from './dto';
+import { UpdateFileDto } from './dto/updatefiledto';
+
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
 
 @Controller('file')
 export class UploadController {
@@ -25,41 +32,44 @@ export class UploadController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new FileTypeValidator({
-            fileType:
-              /^(application\/pdf|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|application\/msword)$/,
-          }),
+          {
+            isValid: (file: Express.Multer.File) =>
+              !!file && ALLOWED_FILE_TYPES.includes(file.mimetype),
+            buildErrorMessage: () =>
+              'Invalid file type. Allowed: PDF, DOC, DOCX',
+          } as any,
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
         ],
       }),
     )
     file: Express.Multer.File,
   ) {
-    console.log(file);
     return this.fileService.uploadFile(file, 'Resume');
   }
 
   @Get()
-  getFile(@Query('key') key: string) {
-    return this.fileService.getFile(key);
+  getFile(@Query() query: GetFileQueryDto) {
+    return this.fileService.getFile(query.key);
   }
 
   @Delete()
-  deleteFile(@Query('key') key: string) {
-    return this.fileService.deleteFile(key);
+  deleteFile(@Query() query: GetFileQueryDto) {
+    return this.fileService.deleteFile(query.key);
   }
 
   @Patch()
   @UseInterceptors(FileInterceptor('file'))
   updateFile(
-    @Body() body: { key: string },
+    @Body() body: UpdateFileDto,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new FileTypeValidator({
-            fileType:
-              /^(application\/pdf|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|application\/msword)$/,
-          }),
+          {
+            isValid: (file: Express.Multer.File) =>
+              !!file && ALLOWED_FILE_TYPES.includes(file.mimetype),
+            buildErrorMessage: () =>
+              'Invalid file type. Allowed: PDF, DOC, DOCX',
+          } as any,
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
         ],
       }),
