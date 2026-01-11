@@ -1,13 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   IsArray,
   IsBoolean,
   IsEnum,
-  IsNumber,
+  IsInt,
   IsOptional,
   IsString,
 } from 'class-validator';
-import { JobSource } from '@prisma/client';
+import {
+  EmploymentType,
+  ExperienceLevel,
+  JobSource,
+  WorkplaceType,
+} from '@prisma/client';
 
 export class UpdateJobDto {
   @IsString()
@@ -22,23 +26,19 @@ export class UpdateJobDto {
   @IsOptional()
   location?: string;
 
-  @IsString()
+  @IsInt()
   @IsOptional()
-  companyName?: string;
-
-  @IsString()
-  @IsOptional()
-  externalId?: string;
+  companyId?: number;
 
   @IsBoolean()
   @IsOptional()
   promoted?: boolean;
 
-  @IsNumber()
+  @IsInt()
   @IsOptional()
   salaryMin?: number;
 
-  @IsNumber()
+  @IsInt()
   @IsOptional()
   salaryMax?: number;
 
@@ -46,20 +46,40 @@ export class UpdateJobDto {
   @IsOptional()
   salaryCurrency?: string;
 
-  @IsString()
-  @IsOptional()
-  url?: string;
-
   @IsEnum(JobSource)
   @IsOptional()
   source?: JobSource;
 
-  @IsBoolean()
+  @IsString()
   @IsOptional()
-  easyApply?: boolean;
+  url?: string;
 
   @IsString({ each: true })
   @IsOptional()
   @IsArray()
   tags?: string[];
+
+  @IsString()
+  @IsOptional()
+  requirements?: string;
+
+  @IsString()
+  @IsOptional()
+  responsibilities?: string;
+
+  @IsString()
+  @IsOptional()
+  benefits?: string;
+
+  @IsEnum(WorkplaceType)
+  @IsOptional()
+  workplaceType?: WorkplaceType;
+
+  @IsEnum(EmploymentType)
+  @IsOptional()
+  employmentType?: EmploymentType;
+
+  @IsEnum(ExperienceLevel)
+  @IsOptional()
+  experienceLevel?: ExperienceLevel;
 }

@@ -23,8 +23,7 @@ export class UploadService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const autoCreate =
-      (process.env.MINIO_AUTO_CREATE_BUCKET ?? 'true') === 'true';
+    const autoCreate = process.env.MINIO_AUTO_CREATE_BUCKET === 'true';
     if (!autoCreate) return;
 
     const exists = await this.minio.bucketExists(this.bucket);

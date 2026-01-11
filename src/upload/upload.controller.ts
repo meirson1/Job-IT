@@ -13,8 +13,7 @@ import {
 } from '@nestjs/common';
 import { UploadService } from './upload.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { GetFileQueryDto } from './dto';
-import { UpdateFileDto } from './dto/updatefiledto';
+import { GetFileQueryDto, UpdateFileDto } from './dto';
 
 const ALLOWED_FILE_TYPES = [
   'application/pdf',

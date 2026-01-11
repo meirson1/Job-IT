@@ -5,32 +5,27 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
-"scripts": {
-  "infra:dev:up": "docker compose up -d",
-  "infra:dev:down": "docker compose down --remove-orphans",
-  "infra:dev:reset": "docker compose down -v --remove-orphans && docker compose up -d",
-
-  "db:wait": "node -e \"const net=require('net');const h='127.0.0.1',p=5432;const start=Date.now();(function t(){const s=net.createConnection(p,h);s.on('connect',()=>{console.log('✅ Postgres is up');s.end();process.exit(0);});s.on('error',()=>{if(Date.now()-start>60000){console.error('❌ Postgres not reachable');process.exit(1);}setTimeout(t,500);});})();\"",
-
-  "prisma:dev:deploy": "prisma migrate deploy --schema=./prisma/schema.prisma",
-  "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
-
-  "dev:up": "npm run infra:dev:up && npm run db:wait && npm run prisma:dev:deploy && npm run prisma:generate",
-  "dev:reset": "npm run infra:dev:reset && npm run db:wait && npm run prisma:dev:deploy && npm run prisma:generate",
-
-  "start:dev": "nest start --watch",
-  "dev": "npm run dev:up && npm run start:dev",
-
-  "prisma:test:deploy": "dotenv -e .env.test -- prisma migrate deploy --schema=./prisma/schema.prisma",
-  "db:test:rm": "docker compose rm test-db -s -f -v",
-  "db:test:up": "docker compose up test-db -d",
-  "db:test:restart": "npm run db:test:rm && npm run db:test:up && npm run prisma:test:deploy",
-  "test": "jest",
-  "test:watch": "jest --watch",
-  "test:cov": "jest --coverage",
-  "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-  "test:e2e": "jest --config ./test/jest-e2e.json"
-},
+  "scripts": {
+    "infra:dev:up": "docker compose up -d",
+    "infra:dev:down": "docker compose down --remove-orphans",
+    "infra:dev:reset": "docker compose down -v --remove-orphans && docker compose up -d",
+    "db:wait": "node -e \"const net=require('net');const h='127.0.0.1',p=5432;const start=Date.now();(function t(){const s=net.createConnection(p,h);s.on('connect',()=>{console.log('✅ Postgres is up');s.end();process.exit(0);});s.on('error',()=>{if(Date.now()-start>60000){console.error('❌ Postgres not reachable');process.exit(1);}setTimeout(t,500);});})();\"",
+    "prisma:dev:deploy": "prisma migrate deploy --schema=./prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
+    "dev:up": "npm run infra:dev:up && npm run db:wait && npm run prisma:dev:deploy && npm run prisma:generate",
+    "dev:reset": "npm run infra:dev:reset && npm run db:wait && npm run prisma:dev:deploy && npm run prisma:generate",
+    "start:dev": "nest start --watch",
+    "dev": "npm run dev:up && npm run start:dev",
+    "prisma:test:deploy": "dotenv -e .env.test -- prisma migrate deploy --schema=./prisma/schema.prisma",
+    "db:test:rm": "docker compose rm test-db -s -f -v",
+    "db:test:up": "docker compose up test-db -d",
+    "db:test:restart": "npm run db:test:rm && npm run db:test:up && npm run prisma:test:deploy",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
@@ -56,6 +51,7 @@
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^22.10.7",
+    "@types/pg": "^8.16.0",
     "@types/supertest": "^6.0.2",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",

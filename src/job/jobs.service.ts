@@ -1,116 +1,70 @@
 import { Injectable, OnModuleInit, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJobDto, UpdateJobDto } from './dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class JobsService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
 
+  private logger = console;
+
   onModuleInit() {
-    console.log('✅ JobsService connected to database');
+    this.logger.log('✅ JobsService connected to database');
   }
 
   async createJob(dto: CreateJobDto) {
-    const company = await this.prisma.company.upsert({
-      where: { name: dto.companyName },
-      update: {},
-      create: { name: dto.companyName },
-    });
     return this.prisma.job.create({
-      data: {
-        title: dto.title,
-        description: dto.description,
-        location: dto.location,
-
-        salaryMin: dto.salaryMin ?? undefined,
-        salaryMax: dto.salaryMax ?? undefined,
-        salaryCurrency: dto.salaryCurrency ?? undefined,
-
-        url: dto.url,
-        source: dto.source,
-        externalId: dto.externalId ?? undefined,
-        tags: dto.tags ?? [],
-
-        promoted: dto.promoted ?? false,
-        easyApply: dto.easyApply ?? false,
-
-        companyId: company.id,
-      },
-      include: {
-        company: true,
-      },
+      data: this.mapJobData(dto),
     });
   }
 
   async updateJob(id: number, dto: UpdateJobDto) {
-    const exists = await this.prisma.job.findUnique({ where: { id } });
-    if (!exists) {
-      throw new NotFoundException('Job not found');
-    }
-
-    let companyId: number | undefined;
-    if (dto.companyName) {
-      const company = await this.prisma.company.upsert({
-        where: { name: dto.companyName },
-        update: {},
-        create: { name: dto.companyName },
-      });
-      companyId = company.id;
-    }
+    await this.ensureJobExists(id);
     return this.prisma.job.update({
       where: { id },
-      data: {
-        title: dto.title ?? undefined,
-        description: dto.description ?? undefined,
-        location: dto.location ?? undefined,
-
-        salaryMin: dto.salaryMin ?? undefined,
-        salaryMax: dto.salaryMax ?? undefined,
-        salaryCurrency: dto.salaryCurrency ?? undefined,
-
-        url: dto.url ?? undefined,
-        source: dto.source ?? undefined,
-        tags: dto.tags ? { set: dto.tags } : undefined,
-
-        promoted: dto.promoted ?? undefined,
-        easyApply: dto.easyApply ?? undefined,
-
-        companyId: companyId ?? undefined,
-      },
-      include: {
-        company: true,
-      },
+      data: this.mapJobData(dto),
     });
   }
 
   async deleteJob(id: number) {
-    const exists = await this.prisma.job.findUnique({ where: { id } });
-    if (!exists) {
-      throw new NotFoundException('Job not found');
-    }
+    await this.ensureJobExists(id);
     await this.prisma.job.delete({ where: { id } });
     return { ok: true };
   }
 
-  async findJob(id: number) {
-    const exists = await this.prisma.job.findUnique({
-      where: { id },
-      include: { company: true },
-    });
-    if (!exists) {
-      throw new NotFoundException('Job not found');
-    }
-    return exists;
+  findJob(id: number) {
+    return this.ensureJobExists(id);
   }
 
   findAllJobs() {
     return this.prisma.job.findMany({
-      include: {
-        company: true,
-      },
       orderBy: {
         createdAt: 'desc',
       },
     });
+  }
+
+  private async ensureJobExists(id: number) {
+    const job = await this.prisma.job.findUnique({ where: { id } });
+    if (!job) throw new NotFoundException('Job not found');
+    return job;
+  }
+
+  // overloads
+  private mapJobData(dto: CreateJobDto): Prisma.JobCreateInput;
+  private mapJobData(dto: UpdateJobDto): Prisma.JobUpdateInput;
+
+  // implementation (one function)
+  private mapJobData(dto: CreateJobDto | UpdateJobDto) {
+    const { companyId, ...rest } = dto;
+
+    const data = {
+      ...rest,
+      ...(companyId !== undefined
+        ? { company: { connect: { id: companyId } } }
+        : {}),
+    };
+    return data as Prisma.JobCreateInput | Prisma.JobUpdateInput;
   }
 }
