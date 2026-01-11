@@ -1,30 +1,51 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { Client } from 'minio';
 
+type UploadResponse = {
+  key: string;
+  url: string;
+  size: number;
+  mimeType: string;
+  originalname: string;
+};
+
 @Injectable()
 export class UploadService implements OnModuleInit {
+  private logger = new Logger(UploadService.name);
+
   private minio: Client;
   private bucket: string;
   private urlExpiresSeconds: number;
+  private owner: string;
+  private autoCreateBucket: boolean;
 
-  constructor() {
-    this.bucket = process.env.MINIO_BUCKET!;
-    this.urlExpiresSeconds =
-      Number(process.env.MINIO_URL_EXPIRES_SECONDS) || 60 * 60;
+  constructor(private readonly config: ConfigService) {
+    this.bucket = this.config.get<string>('MINIO_BUCKET', '');
+    if (!this.bucket) throw new Error('MINIO_BUCKET is required');
+
+    this.owner = this.config.get<string>('MINIO_OWNER', 'anon');
+    this.urlExpiresSeconds = Number(
+      this.config.get<number>('MINIO_URL_EXPIRES_SECONDS', 3600),
+    );
+    this.autoCreateBucket =
+      this.config.get<string>('MINIO_AUTO_CREATE_BUCKET', 'false') === 'true';
+
+    const useSSL = this.config.get<string>('MINIO_USE_SSL', 'false') === 'true';
+    const port = this.config.get<number>('MINIO_PORT', 9000);
 
     this.minio = new Client({
-      endPoint: process.env.MINIO_ENDPOINT ?? 'localhost',
-      port: Number(process.env.MINIO_PORT ?? 9000),
-      useSSL: process.env.MINIO_USE_SSL === 'true',
-      accessKey: process.env.MINIO_ACCESS_KEY ?? 'minio',
-      secretKey: process.env.MINIO_SECRET_KEY ?? 'minio123',
+      endPoint: this.config.get<string>('MINIO_ENDPOINT', 'localhost'),
+      port,
+      useSSL,
+      accessKey: this.config.get<string>('MINIO_ACCESS_KEY', 'minio'),
+      secretKey: this.config.get<string>('MINIO_SECRET_KEY', 'minio123'),
     });
   }
 
   async onModuleInit() {
-    const autoCreate = process.env.MINIO_AUTO_CREATE_BUCKET === 'true';
-    if (!autoCreate) return;
+    if (!this.autoCreateBucket) return;
 
     const exists = await this.minio.bucketExists(this.bucket);
     if (!exists) {
@@ -33,44 +54,32 @@ export class UploadService implements OnModuleInit {
     }
   }
 
+  private getExt(originalname: string): string {
+    const ext = originalname.split('.').pop()?.toLowerCase();
+    return ext && ext.length <= 8 ? ext : 'bin';
+  }
+
   private buildObjectName(folder: string, file: Express.Multer.File): string {
-    const owner = process.env.MINIO_OWNER ?? 'anon';
-
-    const ext = (file.originalname.split('.').pop() || 'bin').toLowerCase();
-
+    const owner = this.owner;
+    const ext = this.getExt(file.originalname);
     return `${folder}/${owner}/${randomUUID()}.${ext}`;
   }
 
-  async uploadFile(
-    file: Express.Multer.File,
-    folder = 'upload',
-  ): Promise<{
-    key: string;
-    url: string;
-    size: number;
-    mimeType: string;
-    originalname: string;
-  }> {
-    const objectName = this.buildObjectName(folder, file);
-
-    await this.minio.putObject(
+  private async presignedUrl(key: string): Promise<string> {
+    return this.minio.presignedGetObject(
       this.bucket,
-      objectName,
-      file.buffer,
-      file.size,
-      {
-        'Content-Type': file.mimetype,
-      },
-    );
-
-    const url = await this.minio.presignedGetObject(
-      this.bucket,
-      objectName,
+      key,
       this.urlExpiresSeconds,
     );
+  }
 
+  private toResponse(
+    file: Express.Multer.File,
+    key: string,
+    url: string,
+  ): UploadResponse {
     return {
-      key: objectName,
+      key,
       url,
       size: file.size,
       mimeType: file.mimetype,
@@ -78,16 +87,21 @@ export class UploadService implements OnModuleInit {
     };
   }
 
+  async uploadFile(
+    file: Express.Multer.File,
+    folder = 'upload',
+  ): Promise<UploadResponse> {
+    const key = this.buildObjectName(folder, file);
+    await this.minio.putObject(this.bucket, key, file.buffer, file.size, {
+      'Content-Type': file.mimetype,
+    });
+    const url = await this.presignedUrl(key);
+    return this.toResponse(file, key, url);
+  }
+
   async getFile(key: string): Promise<{ key: string; url: string }> {
-    const url = await this.minio.presignedGetObject(
-      this.bucket,
-      key,
-      this.urlExpiresSeconds,
-    );
-    return {
-      key,
-      url,
-    };
+    const url = await this.presignedUrl(key);
+    return { key, url };
   }
 
   async deleteFile(key: string): Promise<{ ok: boolean }> {
@@ -98,27 +112,11 @@ export class UploadService implements OnModuleInit {
   async updateFile(
     key: string,
     file: Express.Multer.File,
-  ): Promise<{
-    key: string;
-    url: string;
-    size: number;
-    mimeType: string;
-    originalname: string;
-  }> {
+  ): Promise<UploadResponse> {
     await this.minio.putObject(this.bucket, key, file.buffer, file.size, {
       'Content-Type': file.mimetype,
     });
-    const url = await this.minio.presignedGetObject(
-      this.bucket,
-      key,
-      this.urlExpiresSeconds,
-    );
-    return {
-      key,
-      url,
-      size: file.size,
-      mimeType: file.mimetype,
-      originalname: file.originalname,
-    };
+    const url = await this.presignedUrl(key);
+    return this.toResponse(file, key, url);
   }
 }
