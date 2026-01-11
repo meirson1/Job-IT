@@ -4,15 +4,14 @@ import {
   Delete,
   Get,
   Param,
-  Post,
   ParseIntPipe,
-  Patch,
   Logger,
   HttpStatus,
   HttpCode,
+  Put,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service';
-import { CreateJobDto, UpdateJobDto } from './dto';
+import { CreateJobDto } from './dto';
 
 @Controller('jobs')
 export class JobsController {
@@ -20,11 +19,10 @@ export class JobsController {
 
   constructor(private jobsService: JobsService) {}
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @Put()
   async createJob(@Body() data: CreateJobDto) {
-    const result = await this.jobsService.createJob(data);
-    this.logger.log('POST /jobs - 201 Created');
+    const result = await this.jobsService.createOrUpdateJob(data);
+    this.logger.log('PUT /jobs - 200 OK');
     return result;
   }
 
@@ -39,16 +37,6 @@ export class JobsController {
   async findJob(@Param('id', ParseIntPipe) id: number) {
     const result = await this.jobsService.findJob(id);
     this.logger.log(`GET /jobs/${id} - 200 OK`);
-    return result;
-  }
-
-  @Patch(':id')
-  async updateJob(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() data: UpdateJobDto,
-  ) {
-    const result = await this.jobsService.updateJob(id, data);
-    this.logger.log(`PATCH /jobs/${id} - 200 OK`);
     return result;
   }
 

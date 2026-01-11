@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateJobDto, UpdateJobDto } from './dto';
+import { PrismaService } from '../db/prisma.service';
+import { CreateJobDto } from './dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -13,17 +13,11 @@ export class JobsService implements OnModuleInit {
     this.logger.log('✅ JobsService connected to database');
   }
 
-  async createJob(dto: CreateJobDto) {
-    return this.prisma.job.create({
-      data: this.mapJobData(dto),
-    });
-  }
-
-  async updateJob(id: number, dto: UpdateJobDto) {
-    await this.ensureJobExists(id);
-    return this.prisma.job.update({
-      where: { id },
-      data: this.mapJobData(dto),
+  async createOrUpdateJob(dto: CreateJobDto) {
+    return this.prisma.job.upsert({
+      where: { source_url: { source: dto.source, url: dto.url } },
+      create: this.toData(dto),
+      update: this.toData(dto),
     });
   }
 
@@ -51,20 +45,16 @@ export class JobsService implements OnModuleInit {
     return job;
   }
 
-  // overloads
-  private mapJobData(dto: CreateJobDto): Prisma.JobCreateInput;
-  private mapJobData(dto: UpdateJobDto): Prisma.JobUpdateInput;
-
-  // implementation (one function)
-  private mapJobData(dto: CreateJobDto | UpdateJobDto) {
+  private toData(
+    dto: CreateJobDto,
+  ): Prisma.JobCreateInput & Prisma.JobUpdateInput {
     const { companyId, ...rest } = dto;
 
-    const data = {
+    return {
       ...rest,
       ...(companyId !== undefined
         ? { company: { connect: { id: companyId } } }
         : {}),
     };
-    return data as Prisma.JobCreateInput | Prisma.JobUpdateInput;
   }
 }

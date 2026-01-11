@@ -7,7 +7,7 @@ import { Pool } from 'pg';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor(private config: ConfigService) {
-    const connectionString = process.env.DATABASE_URL;
+    const connectionString = config.get<string>('DATABASE_URL');
 
     if (!connectionString) {
       throw new Error('DATABASE_URL is not defined');

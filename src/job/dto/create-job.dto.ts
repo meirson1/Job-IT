@@ -10,6 +10,7 @@ import {
 import {
   EmploymentType,
   ExperienceLevel,
+  JobRole,
   JobSource,
   WorkplaceType,
 } from '@prisma/client';
@@ -24,8 +25,8 @@ export class CreateJobDto {
   description: string;
 
   @IsString()
-  @IsOptional()
-  location?: string;
+  @IsNotEmpty()
+  location: string;
 
   @IsInt()
   @IsOptional()
@@ -55,32 +56,30 @@ export class CreateJobDto {
   @IsNotEmpty()
   url: string;
 
-  @IsString({ each: true })
   @IsOptional()
   @IsArray()
-  tags?: string[];
+  @IsEnum(JobRole, { each: true })
+  role?: JobRole[];
 
   @IsString()
-  @IsOptional()
-  requirements?: string;
+  @IsNotEmpty()
+  requirements: string;
 
   @IsString()
-  @IsOptional()
-  responsibilities?: string;
+  @IsNotEmpty()
+  responsibilities: string;
 
   @IsString()
   @IsOptional()
   benefits?: string;
 
   @IsEnum(WorkplaceType)
-  @IsOptional()
-  workplaceType?: WorkplaceType;
+  workplaceType: WorkplaceType;
 
   @IsEnum(EmploymentType)
-  @IsOptional()
-  employmentType?: EmploymentType;
+  employmentType: EmploymentType;
 
   @IsEnum(ExperienceLevel)
-  @IsOptional()
-  experienceLevel?: ExperienceLevel;
+  @IsNotEmpty()
+  experienceLevel: ExperienceLevel;
 }

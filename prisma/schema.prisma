@@ -51,6 +51,20 @@ enum ExperienceLevel {
   LEAD
 }
 
+enum JobRole {
+  FULLSTACK
+  FRONTEND
+  BACKEND
+  DATA_ENGINEER
+  DATA_SCIENTIST
+  DEVOPS
+  QA
+  MOBILE
+  PRODUCT
+  SECURITY
+  OTHER
+}
+
 model User {
   id       Int    @id @default(autoincrement())
   name     String
@@ -106,18 +120,18 @@ model Job {
 
   title            String
   description      String
-  requirements     String?
-  responsibilities String?
+  requirements     String
+  responsibilities String
   benefits         String?
 
-  location        String?
-  workplaceType   WorkplaceType?
-  employmentType  EmploymentType?
-  experienceLevel ExperienceLevel?
-  promoted        Boolean          @default(false)
+  location        String
+  workplaceType   WorkplaceType
+  employmentType  EmploymentType
+  experienceLevel ExperienceLevel
+  promoted        Boolean         @default(false)
 
   source JobSource
-  url    String?
+  url    String
 
   salaryMin      Int?
   salaryMax      Int?
@@ -126,11 +140,11 @@ model Job {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tags         String[]      @default([])
+  role         JobRole[]
   applications Application[]
   savedBy      SavedJob[]
 
-  @@unique([source, url])
+  @@unique([source, url], name: "source_url")
   @@index([companyId])
 }
 
