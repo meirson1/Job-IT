@@ -1,7 +1,7 @@
 import { IsString, MinLength } from 'class-validator';
 
-export class GetFileQueryDto {
+export class FileKeyDto {
   @IsString()
-  @MinLength(1)
+  @MinLength(1, { message: 'key is required' })
   key!: string;
 }

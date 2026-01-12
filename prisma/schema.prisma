@@ -17,7 +17,7 @@ enum ApplicationStatus {
   IN_REVIEW
   INTERVIEW
   REJECTED
-  HIRED
+  CLOSED
 }
 
 enum JobSource {
@@ -51,35 +51,18 @@ enum ExperienceLevel {
   LEAD
 }
 
-enum JobSource {
-  LINKEDIN
-  COMPANY_SITE
-  GREENHOUSE
-  LEVER
-  INDEED
+enum JobRole {
+  FULLSTACK
+  FRONTEND
+  BACKEND
+  DATA_ENGINEER
+  DATA_SCIENTIST
+  DEVOPS
+  QA
+  MOBILE
+  PRODUCT
+  SECURITY
   OTHER
-}
-
-enum WorkplaceType {
-  ONSITE
-  HYBRID
-  REMOTE
-}
-
-enum EmploymentType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  INTERN
-  TEMP
-}
-
-enum ExperienceLevel {
-  INTERN
-  JUNIOR
-  MID
-  SENIOR
-  LEAD
 }
 
 model User {
@@ -90,9 +73,8 @@ model User {
 
   GlobalRole GlobalRole @default(USER)
 
-  companyId   Int?
-  companyRole CompanyRole?
-  company     Company?     @relation(fields: [companyId], references: [id])
+  companyId Int?
+  company   Company? @relation(fields: [companyId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -116,10 +98,9 @@ model Company {
 }
 
 model CompanyMember {
-  id        Int         @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   userId    Int
   companyId Int
-  role      CompanyRole
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -134,42 +115,37 @@ model CompanyMember {
 model Job {
   id Int @id @default(autoincrement())
 
-  companyId Int
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId Int?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   title            String
   description      String
-  requirements     String?
-  responsibilities String?
+  requirements     String
+  responsibilities String
   benefits         String?
 
-  location        String?
-  workplaceType   WorkplaceType?
-  employmentType  EmploymentType?
-  experienceLevel ExperienceLevel?
-  promoted        Boolean          @default(false)
-  easyApply       Boolean          @default(false)
+  location        String
+  workplaceType   WorkplaceType
+  employmentType  EmploymentType
+  experienceLevel ExperienceLevel
+  promoted        Boolean         @default(false)
 
-  source     JobSource
-  externalId String?
-  url        String?
-  applyUrl   String?
+  source JobSource
+  url    String
 
   salaryMin      Int?
   salaryMax      Int?
   salaryCurrency String?
 
-  postedAt  DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tags         String[]      @default([])
+  role         JobRole[]
   applications Application[]
   savedBy      SavedJob[]
 
-  @@unique([source, externalId])
+  @@unique([source, url], name: "source_url")
   @@index([companyId])
-  @@index([source])
 }
 
 model Application {

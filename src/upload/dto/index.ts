@@ -1,2 +1,1 @@
-export * from './getfilequeryDto';
-export * from './updatefiledto';
+export * from './file-key.dto';
