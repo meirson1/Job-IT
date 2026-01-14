@@ -1,0 +1,100 @@
+{
+  "name": "JobIT",
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "prisma:dev": "npx prisma migrate dev",
+    "prisma:deploy": "npx prisma migrate deploy",
+    "prisma:generate": "npx prisma generate",
+    "prisma:studio": "npx prisma studio",
+    "build": "nest build",
+    "format": "prettier --write \"{src,apps,libs,test}/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "start": "nest start",
+    "start:auth": "nest start auth-service",
+    "start:auth:dev": "nest start auth-service --watch",
+    "start:file": "nest start file-service",
+    "start:file:dev": "nest start file-service --watch",
+    "start:job": "nest start job-service",
+    "start:job:dev": "nest start job-service --watch",
+    "start:dev": "nest start auth-service --watch",
+    "start:debug": "nest start auth-service --debug --watch",
+    "web:dev": "npm run dev --prefix apps/web",
+    "start:all": "concurrently -n AUTH,FILE,JOB,WEB -c auto \"npm run start:auth:dev\" \"npm run start:file:dev\" \"npm run start:job:dev\" \"npm run web:dev\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.{ts,tsx}\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.1",
+    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "and": "^0.0.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "minio": "^8.0.6",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "vite": "7.3.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.10.7",
+    "@types/pg": "^8.16.0",
+    "@types/supertest": "^6.0.2",
+    "concurrently": "^9.2.1",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^16.0.0",
+    "jest": "^30.0.0",
+    "prettier": "^3.4.2",
+    "prisma": "^7.2.0",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
