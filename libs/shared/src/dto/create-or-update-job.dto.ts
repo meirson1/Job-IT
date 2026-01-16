@@ -33,9 +33,9 @@ export class CreateOrUpdateJobDto {
   @IsNotEmpty()
   location: string;
 
-  @IsInt()
+  @IsString()
   @IsOptional()
-  companyId?: number;
+  companyName?: string;
 
   @IsInt()
   @IsOptional()

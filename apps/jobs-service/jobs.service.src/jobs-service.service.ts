@@ -126,13 +126,20 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   private toData(
     dto: CreateOrUpdateJobDto & { externalId: string },
   ): Prisma.JobCreateInput & Prisma.JobUpdateInput {
-    const { companyId, url, ...rest } = dto;
+    const { companyName, url, ...rest } = dto;
 
     return {
       ...rest,
       url: url ?? null,
-      ...(typeof companyId === 'number'
-        ? { company: { connect: { id: companyId } } }
+      ...(companyName
+        ? {
+            company: {
+              connectOrCreate: {
+                where: { name: companyName },
+                create: { name: companyName },
+              },
+            },
+          }
         : {}),
     };
   }
