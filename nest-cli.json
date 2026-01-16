@@ -6,7 +6,8 @@
   "sourceRoot": ".",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": true
+    "webpack": true,
+    "webpackConfigPath": "webpack.config.js"
   },
   "projects": {
     "auth-service": {
@@ -27,11 +28,11 @@
         "tsConfigPath": "apps/file-service/tsconfig.app.json"
       }
     },
-    "job-service": {
+    "jobs-service": {
       "type": "application",
       "root": "apps/jobs-service",
       "entryFile": "main",
-      "sourceRoot": "apps/jobs-service/src",
+      "sourceRoot": "apps/jobs-service/jobs.service.src",
       "compilerOptions": {
         "tsConfigPath": "apps/jobs-service/tsconfig.app.json"
       }

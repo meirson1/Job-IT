@@ -13,6 +13,6 @@
     "baseUrl": "../../",
     "skipLibCheck": true
   },
-  "include": ["src/**/*"],
+  "include": ["jobs.service.src/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
