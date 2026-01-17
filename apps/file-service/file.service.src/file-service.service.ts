@@ -63,10 +63,24 @@ export class FileService implements OnModuleInit {
     return ext && ext.length <= 8 ? ext : 'bin';
   }
 
+  private sanitizeFilename(filename: string): string {
+    const nameWithoutExt =
+      filename.substring(0, filename.lastIndexOf('.')) || filename;
+    const sanitized = nameWithoutExt
+      .replace(/[^a-zA-Z0-9\s_-]/g, '-')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .toLowerCase()
+      .substring(0, 50);
+    return sanitized;
+  }
+
   private buildObjectName(folder: string, file: Express.Multer.File): string {
     const owner = this.owner;
     const ext = this.getExt(file.originalname);
-    return `${folder}/${owner}/${randomUUID()}.${ext}`;
+    const sanitized = this.sanitizeFilename(file.originalname);
+    const uuid = randomUUID();
+    return `${folder}/${owner}/${uuid}-${sanitized}.${ext}`;
   }
 
   private async presignedUrl(key: string): Promise<string> {
