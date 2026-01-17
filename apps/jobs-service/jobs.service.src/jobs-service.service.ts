@@ -5,71 +5,55 @@ import {
   Logger,
   OnModuleDestroy,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@app/database';
 import { CreateOrUpdateJobDto } from '@app/shared';
 import { Prisma } from '@app/database';
 import { randomUUID } from 'crypto';
-import { Kafka, Producer } from 'kafkajs';
 import { isUUID } from 'class-validator';
+import { ClientKafka } from '@nestjs/microservices';
 
 type JobEventType = 'job.upserted' | 'job.deleted';
+
+type JobUpsertedPayload = {
+  operation: 'created' | 'updated';
+  id: number;
+  externalId: string;
+};
+
+type JobDeletedPayload = {
+  id: number;
+  externalId: string;
+};
 
 @Injectable()
 export class JobsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(JobsService.name);
 
-  private kafkaProducer!: Producer;
-  private kafkaTopic!: string;
-
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly configService: ConfigService,
+    @Inject('KAFKA_SERVICE')
+    private readonly kafkaClient: ClientKafka,
+  ) {}
 
   async onModuleInit() {
     this.logger.log('✅ JobsService connected to database');
-
-    const brokers = (process.env.KAFKA_BROKERS ?? 'localhost:9092')
-      .split(',')
-      .map((b) => b.trim())
-      .filter(Boolean);
-
-    this.kafkaTopic = process.env.KAFKA_TOPIC_JOBS || 'jobs.events';
-
-    const kafka = new Kafka({
-      clientId: process.env.KAFKA_CLIENT_ID || 'jobs-service',
-      brokers,
-    });
-
-    this.kafkaProducer = kafka.producer();
-    await this.kafkaProducer.connect();
-    this.logger.log(`✅ Kafka producer connected (topic: ${this.kafkaTopic})`);
+    await this.kafkaClient.connect();
+    this.logger.log('✅ Kafka client connected');
   }
 
   async onModuleDestroy() {
-    if (this.kafkaProducer) {
-      await this.kafkaProducer.disconnect();
-      this.logger.log('✅ Kafka producer disconnected');
-    }
-  }
-
-  private async publish<T>(type: JobEventType, key: string, payload: T) {
-    const value = JSON.stringify({
-      type,
-      at: new Date().toISOString(),
-      payload,
-    });
-
-    await this.kafkaProducer.send({
-      topic: this.kafkaTopic,
-      messages: [{ key, value }],
-    });
+    await this.kafkaClient.close();
+    this.logger.log('✅ Kafka client disconnected');
   }
 
   async createOrUpdateJob(dto: CreateOrUpdateJobDto) {
     const externalId = dto.externalId ?? randomUUID();
-
-    if (!isUUID(externalId)) {
+    if (!isUUID(externalId))
       throw new BadRequestException('externalId must be a valid UUID');
-    }
 
     const existingJob = await this.prisma.job.findUnique({
       where: { externalId },
@@ -86,11 +70,12 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       update: this.toData({ ...dto, externalId }),
     });
 
-    await this.publish('job.upserted', externalId, {
+    this.emitEvent('job.upserted', {
       operation,
       id: job.id,
       externalId: job.externalId,
     });
+
     return job;
   }
 
@@ -98,10 +83,11 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     const job = await this.ensureJobExists(id);
     await this.prisma.job.delete({ where: { id } });
 
-    await this.publish('job.deleted', job.externalId, {
-      externalId: job.externalId,
+    this.emitEvent('job.deleted', {
       id: job.id,
+      externalId: job.externalId,
     });
+
     return { ok: true };
   }
 
@@ -142,5 +128,14 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
           }
         : {}),
     };
+  }
+
+  private emitEvent(type: 'job.upserted', payload: JobUpsertedPayload): void;
+  private emitEvent(type: 'job.deleted', payload: JobDeletedPayload): void;
+  private emitEvent(
+    type: JobEventType,
+    payload: JobUpsertedPayload | JobDeletedPayload,
+  ) {
+    this.kafkaClient.emit(type, payload);
   }
 }

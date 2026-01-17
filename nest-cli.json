@@ -31,7 +31,7 @@
     "jobs-service": {
       "type": "application",
       "root": "apps/jobs-service",
-      "entryFile": "main",
+      "entryFile": "jobs-service.main",
       "sourceRoot": "apps/jobs-service/jobs.service.src",
       "compilerOptions": {
         "tsConfigPath": "apps/jobs-service/tsconfig.app.json"
