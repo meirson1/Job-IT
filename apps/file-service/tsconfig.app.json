@@ -4,5 +4,5 @@
     "outDir": "../../dist/apps/file-service",
     "types": ["node"]
   },
-  "include": ["src/**/*"]
+  "include": ["file.service.src/**/*"]
 }

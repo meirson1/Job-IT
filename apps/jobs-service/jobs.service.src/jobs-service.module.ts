@@ -27,6 +27,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
             // consumer: {
             //   groupId: config.get<string>('KAFKA_GROUP_ID') || 'jobs-consumer',
             // },
+            producerOnly: true,
           },
         }),
         inject: [ConfigService],

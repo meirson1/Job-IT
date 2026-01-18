@@ -15,17 +15,16 @@ import { randomUUID } from 'crypto';
 import { isUUID } from 'class-validator';
 import { ClientKafka } from '@nestjs/microservices';
 
-type JobEventType = 'job.upserted' | 'job.deleted';
-
-type JobUpsertedPayload = {
-  operation: 'created' | 'updated';
-  id: number;
-  externalId: string;
-};
-
-type JobDeletedPayload = {
-  id: number;
-  externalId: string;
+type JobEventPayloads = {
+  'job.upserted': {
+    operation: 'created' | 'updated';
+    id: number;
+    externalId: string;
+  };
+  'job.deleted': {
+    id: number;
+    externalId: string;
+  };
 };
 
 @Injectable()
@@ -130,11 +129,9 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  private emitEvent(type: 'job.upserted', payload: JobUpsertedPayload): void;
-  private emitEvent(type: 'job.deleted', payload: JobDeletedPayload): void;
-  private emitEvent(
-    type: JobEventType,
-    payload: JobUpsertedPayload | JobDeletedPayload,
+  private emitEvent<T extends keyof JobEventPayloads>(
+    type: T,
+    payload: JobEventPayloads[T],
   ) {
     this.kafkaClient.emit(type, payload);
   }

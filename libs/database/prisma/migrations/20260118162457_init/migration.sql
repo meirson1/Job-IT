@@ -59,6 +59,7 @@ CREATE TABLE "CompanyMember" (
 -- CreateTable
 CREATE TABLE "Job" (
     "id" SERIAL NOT NULL,
+    "externalId" UUID NOT NULL,
     "companyId" INTEGER,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
@@ -71,7 +72,7 @@ CREATE TABLE "Job" (
     "experienceLevel" "ExperienceLevel" NOT NULL,
     "promoted" BOOLEAN NOT NULL DEFAULT false,
     "source" "JobSource" NOT NULL,
-    "url" TEXT NOT NULL,
+    "url" TEXT,
     "salaryMin" INTEGER,
     "salaryMax" INTEGER,
     "salaryCurrency" TEXT,
@@ -120,10 +121,10 @@ CREATE INDEX "CompanyMember_companyId_idx" ON "CompanyMember"("companyId");
 CREATE UNIQUE INDEX "CompanyMember_userId_companyId_key" ON "CompanyMember"("userId", "companyId");
 
 -- CreateIndex
-CREATE INDEX "Job_companyId_idx" ON "Job"("companyId");
+CREATE UNIQUE INDEX "Job_externalId_key" ON "Job"("externalId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Job_source_url_key" ON "Job"("source", "url");
+CREATE INDEX "Job_companyId_idx" ON "Job"("companyId");
 
 -- CreateIndex
 CREATE INDEX "Application_jobId_idx" ON "Application"("jobId");
