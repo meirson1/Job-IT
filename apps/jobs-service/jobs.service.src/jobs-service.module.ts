@@ -21,12 +21,9 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
             client: {
               clientId: 'jobs-service',
               brokers: (
-                config.get<string>('KAFKA_BROKERS') || '127.0.0.1:9092'
+                config.get<string>('KAFKA_BROKERS') ?? 'localhost:9092'
               ).split(','),
             },
-            // consumer: {
-            //   groupId: config.get<string>('KAFKA_GROUP_ID') || 'jobs-consumer',
-            // },
             producerOnly: true,
           },
         }),

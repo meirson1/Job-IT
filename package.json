@@ -22,7 +22,7 @@
     "start:file": "nest start file-service",
     "start:file:dev": "nest start file-service --watch",
     "start:job": "nest start jobs-service",
-    "start:job:dev": "nest start jobs-service --watch",
+    "start:job:dev": "npx prisma migrate reset && npx prisma migrate dev && nest start jobs-service --watch",
     "start:dev": "nest start auth-service --watch",
     "start:debug": "nest start auth-service --debug --watch",
     "web:dev": "npm run dev --prefix apps/web",
