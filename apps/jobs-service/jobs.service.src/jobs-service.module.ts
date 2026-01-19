@@ -15,14 +15,12 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ClientsModule.registerAsync([
       {
         name: 'KAFKA_SERVICE',
-        useFactory: (config: ConfigService) => ({
+        useFactory: (configService: ConfigService) => ({
           transport: Transport.KAFKA,
           options: {
             client: {
               clientId: 'jobs-service',
-              brokers: (
-                config.get<string>('KAFKA_BROKERS') ?? 'localhost:9092'
-              ).split(','),
+              brokers: [configService.get('KAFKA_BROKERS') || 'localhost:9092'],
             },
             producerOnly: true,
           },

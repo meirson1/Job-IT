@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { IndexerController } from './indexer.controller.js';
-import { IndexerService } from './indexer.service.js';
+import { IndexerController } from './indexer-service.controller.js';
+import { IndexerService } from './indexer-service.service.js';
 
 @Module({
   imports: [

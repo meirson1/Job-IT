@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { IndexerModule } from './indexer.module.js';
+import { IndexerModule } from './indexer-service.module.js';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
