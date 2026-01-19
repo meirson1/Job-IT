@@ -1,50 +1,56 @@
 {
-  "name": "job-it-backend",
+  "name": "JobIT",
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
   "version": "0.0.1",
   "description": "",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
-"scripts": {
-  "infra:dev:up": "docker compose up -d",
-  "infra:dev:down": "docker compose down --remove-orphans",
-  "infra:dev:reset": "docker compose down -v --remove-orphans && docker compose up -d",
-
-  "db:wait": "node -e \"const net=require('net');const h='127.0.0.1',p=5432;const start=Date.now();(function t(){const s=net.createConnection(p,h);s.on('connect',()=>{console.log('✅ Postgres is up');s.end();process.exit(0);});s.on('error',()=>{if(Date.now()-start>60000){console.error('❌ Postgres not reachable');process.exit(1);}setTimeout(t,500);});})();\"",
-
-  "prisma:dev:deploy": "prisma migrate deploy --schema=./prisma/schema.prisma",
-  "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
-
-  "dev:up": "npm run infra:dev:up && npm run db:wait && npm run prisma:dev:deploy && npm run prisma:generate",
-  "dev:reset": "npm run infra:dev:reset && npm run db:wait && npm run prisma:dev:deploy && npm run prisma:generate",
-
-  "start:dev": "nest start --watch",
-  "dev": "npm run dev:up && npm run start:dev",
-
-  "prisma:test:deploy": "dotenv -e .env.test -- prisma migrate deploy --schema=./prisma/schema.prisma",
-  "db:test:rm": "docker compose rm test-db -s -f -v",
-  "db:test:up": "docker compose up test-db -d",
-  "db:test:restart": "npm run db:test:rm && npm run db:test:up && npm run prisma:test:deploy",
-  "test": "jest",
-  "test:watch": "jest --watch",
-  "test:cov": "jest --coverage",
-  "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-  "test:e2e": "jest --config ./test/jest-e2e.json"
-},
+  "scripts": {
+    "prisma:dev": "npx prisma migrate dev",
+    "prisma:deploy": "npx prisma migrate deploy",
+    "prisma:generate": "npx prisma generate",
+    "prisma:studio": "npx prisma studio",
+    "build": "nest build",
+    "format": "prettier --write \"{src,apps,libs,test}/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "start": "nest start",
+    "start:auth": "nest start auth-service",
+    "start:auth:dev": "nest start auth-service --watch",
+    "start:file": "nest start file-service",
+    "start:file:dev": "nest start file-service --watch",
+    "start:job": "nest start jobs-service",
+    "start:job:dev": "npx prisma migrate reset && npx prisma migrate dev && nest start jobs-service --watch",
+    "start:dev": "nest start auth-service --watch",
+    "start:debug": "nest start auth-service --debug --watch",
+    "web:dev": "npm run dev --prefix apps/web",
+    "start:all": "concurrently -n AUTH,FILE,JOB,WEB -c auto \"npm run start:auth:dev\" \"npm run start:file:dev\" \"npm run start:job:dev\" \"npm run web:dev\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.{ts,tsx}\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
-    "@nestjs/mapped-types": "*",
+    "@nestjs/microservices": "^11.1.12",
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
+    "and": "^0.0.3",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.0",
+    "class-validator": "^0.14.3",
+    "kafkajs": "^2.2.4",
     "minio": "^8.0.6",
-    "prisma": "^7.2.0",
+    "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "vite": "7.3.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -52,13 +58,13 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
-    "@types/express": "^5.0.6",
+    "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^22.10.7",
+    "@types/pg": "^8.16.0",
     "@types/supertest": "^6.0.2",
     "concurrently": "^9.2.1",
-    "cross-env": "^10.1.0",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
@@ -66,6 +72,7 @@
     "globals": "^16.0.0",
     "jest": "^30.0.0",
     "prettier": "^3.4.2",
+    "prisma": "^7.2.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
@@ -73,8 +80,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0",
-    "wait-on": "^9.0.3"
+    "typescript-eslint": "^8.20.0"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -91,9 +97,6 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1"
-    }
+    "testEnvironment": "node"
   }
 }
