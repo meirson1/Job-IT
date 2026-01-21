@@ -1,7 +1,14 @@
-import { Controller, Logger } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Logger,
+  Param,
+  Put,
+} from '@nestjs/common';
 import { JobsService } from './jobs-service.service';
 import { CreateOrUpdateJobDto } from '@app/shared';
-import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('jobs')
 export class JobsController {
@@ -9,30 +16,30 @@ export class JobsController {
 
   constructor(private jobsService: JobsService) {}
 
-  @MessagePattern('jobs.upsert')
-  async upsertJob(@Payload() data: CreateOrUpdateJobDto) {
+  @Put()
+  async upsertJob(@Body() data: CreateOrUpdateJobDto) {
     const result = await this.jobsService.upsertJob(data);
     this.logger.log(`PUT /jobs - upsert ok id: ${result.id}`);
     return result;
   }
 
-  @MessagePattern('jobs.findAll')
+  @Get()
   async findAllJobs() {
     const result = await this.jobsService.findAllJobs();
     this.logger.log('GET /jobs - 200 OK');
     return result;
   }
 
-  @MessagePattern('jobs.find')
-  async findJob(@Payload() id: number | string) {
+  @Get(':id')
+  async findJob(@Param('id') id: number | string) {
     const numericId = Number(id);
     const result = await this.jobsService.findJob(numericId);
     this.logger.log(`GET /jobs/${numericId} - 200 OK`);
     return result;
   }
 
-  @MessagePattern('jobs.delete')
-  async deleteJob(@Payload() id: number | string) {
+  @Delete(':id')
+  async deleteJob(@Param('id') id: number | string) {
     const numericId = Number(id);
     await this.jobsService.deleteJob(numericId);
     this.logger.log(`DELETE /jobs/${numericId} - 204 No Content`);
