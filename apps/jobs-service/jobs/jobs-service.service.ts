@@ -22,7 +22,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private prisma: PrismaService,
     private readonly configService: ConfigService,
-    @Inject('KAFKA_SERVICE')
+    @Inject('JOB_SERVICE')
     private readonly kafkaClient: ClientKafka,
   ) {}
 
@@ -37,7 +37,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     this.logger.log('✅ Kafka client disconnected');
   }
 
-  async createOrUpdateJob(dto: CreateOrUpdateJobDto) {
+  async upsertJob(dto: CreateOrUpdateJobDto) {
     const externalId = dto.externalId ?? randomUUID();
     if (!isUUID(externalId))
       throw new BadRequestException('externalId must be a valid UUID');

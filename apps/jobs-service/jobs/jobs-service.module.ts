@@ -14,15 +14,17 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     PrismaModule,
     ClientsModule.registerAsync([
       {
-        name: 'KAFKA_SERVICE',
+        name: 'JOB_SERVICE',
         useFactory: (configService: ConfigService) => ({
           transport: Transport.KAFKA,
           options: {
             client: {
-              clientId: 'jobs-service',
+              clientId: 'job',
               brokers: [configService.get('KAFKA_BROKERS') || 'localhost:9092'],
             },
-            producerOnly: true,
+            consumer: {
+              groupId: 'job-consumer',
+            },
           },
         }),
         inject: [ConfigService],

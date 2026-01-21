@@ -1,0 +1,10 @@
+dist
+build
+.nest
+node_modules
+
+# prisma generated
+libs/database/src/generated/**
+
+# web app (vite/react)
+apps/web/**

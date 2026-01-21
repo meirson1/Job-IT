@@ -6,44 +6,27 @@
   "sourceRoot": ".",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": true,
-    "webpackConfigPath": "webpack.config.js"
+    "webpack": false
   },
   "projects": {
+    "api-gateway": {
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "api-gateway.main",
+      "sourceRoot": "apps/api-gateway/api",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
+        "webpack": true,
+        "webpackConfigPath": "webpack.config.js"
+      }
+    },
     "auth-service": {
       "type": "application",
       "root": "apps/auth-service",
       "entryFile": "main",
-      "sourceRoot": "apps/auth-service/src",
+      "sourceRoot": "apps/auth-service/auth",
       "compilerOptions": {
         "tsConfigPath": "apps/auth-service/tsconfig.app.json"
-      }
-    },
-    "file-service": {
-      "type": "application",
-      "root": "apps/file-service",
-      "entryFile": "file-service.main",
-      "sourceRoot": "apps/file-service/file.service.src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/file-service/tsconfig.app.json"
-      }
-    },
-    "indexer": {
-      "type": "application",
-      "root": "apps/indexer",
-      "entryFile": "indexer.main",
-      "sourceRoot": "apps/indexer/indexer.src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/indexer/tsconfig.app.json"
-      }
-    },
-    "jobs-service": {
-      "type": "application",
-      "root": "apps/jobs-service",
-      "entryFile": "jobs-service.main",
-      "sourceRoot": "apps/jobs-service/jobs.service.src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/jobs-service/tsconfig.app.json"
       }
     },
     "database": {
@@ -53,6 +36,35 @@
       "sourceRoot": "libs/database/src",
       "compilerOptions": {
         "tsConfigPath": "libs/database/tsconfig.lib.json"
+      }
+    },
+    "file-service": {
+      "type": "application",
+      "root": "apps/file-service",
+      "entryFile": "file-service.main",
+      "sourceRoot": "apps/file-service/file",
+      "compilerOptions": {
+        "tsConfigPath": "apps/file-service/tsconfig.app.json"
+      }
+    },
+    "indexer-service": {
+      "type": "application",
+      "root": "apps/indexer-service",
+      "entryFile": "indexer-service.main",
+      "sourceRoot": "apps/indexer-service/indexer",
+      "compilerOptions": {
+        "tsConfigPath": "apps/indexer-service/tsconfig.app.json"
+      }
+    },
+    "jobs-service": {
+      "type": "application",
+      "root": "apps/jobs-service",
+      "entryFile": "jobs-service.main",
+      "sourceRoot": "apps/jobs-service/jobs",
+      "compilerOptions": {
+        "tsConfigPath": "apps/jobs-service/tsconfig.app.json",
+        "webpack": true,
+        "webpackConfigPath": "webpack.config.js"
       }
     },
     "shared": {

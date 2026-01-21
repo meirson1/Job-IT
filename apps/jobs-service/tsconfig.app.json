@@ -2,7 +2,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/apps/jobs-service",
-    "module": "nodenext",
     "declaration": false,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -13,6 +12,6 @@
     "baseUrl": "../../",
     "skipLibCheck": true
   },
-  "include": ["jobs.service.src/**/*"],
+  "include": ["jobs/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
