@@ -9,17 +9,7 @@
     "webpack": false
   },
   "projects": {
-    "api-gateway": {
-      "type": "application",
-      "root": "apps/api-gateway",
-      "entryFile": "api-gateway.main",
-      "sourceRoot": "apps/api-gateway/api",
-      "compilerOptions": {
-        "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
-        "webpack": true,
-        "webpackConfigPath": "webpack.config.js"
-      }
-    },
+
     "auth-service": {
       "type": "application",
       "root": "apps/auth-service",

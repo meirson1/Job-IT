@@ -6,6 +6,7 @@ async function bootstrap() {
   const configService = new ConfigService();
   const port = Number(configService.get('FILE_PORT') || 3002);
   const app = await NestFactory.create(FileModule);
+  app.enableCors();
 
   await app.listen(port, '0.0.0.0');
   console.log(`File Service is running as HTTP app on port: ${port}`);

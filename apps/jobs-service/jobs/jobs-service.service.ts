@@ -14,6 +14,7 @@ import { Prisma } from '@app/database';
 import { randomUUID } from 'crypto';
 import { isUUID } from 'class-validator';
 import { ClientKafka } from '@nestjs/microservices';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class JobsService implements OnModuleInit, OnModuleDestroy {
@@ -57,11 +58,13 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       update: this.toData({ ...dto, externalId }),
     });
 
-    this.kafkaClient.emit('job.upserted', {
-      operation,
-      id: job.id,
-      externalId: job.externalId,
-    });
+    await lastValueFrom(
+      this.kafkaClient.emit('job.upserted', {
+        operation,
+        id: job.id,
+        externalId: job.externalId,
+      }),
+    );
 
     return job;
   }
@@ -70,10 +73,12 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     const job = await this.ensureJobExists(id);
     await this.prisma.job.delete({ where: { id } });
 
-    this.kafkaClient.emit('job.deleted', {
-      id: job.id,
-      externalId: job.externalId,
-    });
+    await lastValueFrom(
+      this.kafkaClient.emit('job.deleted', {
+        id: job.id,
+        externalId: job.externalId,
+      }),
+    );
 
     return { ok: true };
   }

@@ -85,15 +85,9 @@ services:
       "
       echo 'Creating Kafka topics...'
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic jobs.upsert --partitions 1 --replication-factor 1
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic jobs.findAll --partitions 1 --replication-factor 1
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic jobs.find --partitions 1 --replication-factor 1
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic jobs.delete --partitions 1 --replication-factor 1
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic jobs.upsert.reply --partitions 1 --replication-factor 1
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic jobs.findAll.reply --partitions 1 --replication-factor 1
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic jobs.find.reply --partitions 1 --replication-factor 1
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic jobs.delete.reply --partitions 1 --replication-factor 1
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic job.upserted --partitions 1 --replication-factor 1
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic job.deleted --partitions 1 --replication-factor 1
       echo 'All topics created successfully!'
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list
       "
