@@ -24,7 +24,7 @@ export class UploadController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     this.logger.log(
-      `Received HTTP file upload: ${file.originalname} (${file.size} bytes)`,
+      `✅ Received HTTP file upload: ${file.originalname} (${file.size} bytes)`,
     );
     this.validateFile(file);
     return this.fileService.uploadFile(file, 'Resume');
@@ -40,10 +40,10 @@ export class UploadController {
     if (!key) {
       throw new RpcException('File key is missing in body');
     }
-    this.logger.log(`Received HTTP PATCH request to update file: ${key}`);
+    this.logger.log(`✅ Received HTTP PATCH request to update file: ${key}`);
     this.validateFile(file);
     const result = await this.fileService.updateFile(key, file);
-    this.logger.log(`File updated successfully: ${result.key}`);
+    this.logger.log(`✅ File updated successfully: ${result.key}`);
     return result;
   }
 

@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { FileModule } from './file-service.module';
 import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
   const configService = new ConfigService();
@@ -9,6 +10,6 @@ async function bootstrap() {
   app.enableCors();
 
   await app.listen(port, '0.0.0.0');
-  console.log(`File Service is running as HTTP app on port: ${port}`);
+  Logger.log(`✅ File Service is running as HTTP app on port: ${port}`);
 }
 void bootstrap();
