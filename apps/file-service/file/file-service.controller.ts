@@ -1,68 +1,84 @@
-import {
-  Controller,
-  Logger,
-  Post,
-  UseInterceptors,
-  UploadedFile,
-  Get,
-  Delete,
-  Patch,
-  Body,
-  Query,
-} from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { RpcException } from '@nestjs/microservices';
+import { Controller, Logger } from '@nestjs/common';
+import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { FileService } from './file-service.service';
 
-@Controller('files')
-export class UploadController {
-  private readonly logger = new Logger(UploadController.name);
+interface FilePayload {
+  buffer: string;
+  originalname: string;
+  mimetype: string;
+  size: number;
+}
+
+interface FileKeyPayload {
+  key: string;
+}
+
+interface UpdateFilePayload extends FileKeyPayload {
+  file: FilePayload;
+}
+
+@Controller()
+export class FileController {
+  private readonly logger = new Logger(FileController.name);
 
   constructor(private readonly fileService: FileService) {}
 
-  @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  @MessagePattern('files.upload')
+  async uploadFile(@Payload() data: { file: FilePayload; category?: string }) {
     this.logger.log(
-      `✅ Received HTTP file upload: ${file.originalname} (${file.size} bytes)`,
+      `✅ Received TCP file upload: ${data.file.originalname} (${data.file.size} bytes)`,
     );
+    const file = this.reconstructFile(data.file);
     this.validateFile(file);
-    return this.fileService.uploadFile(file, 'Resume');
+    return this.fileService.uploadFile(file, data.category || 'Resume');
   }
 
-  @Patch()
-  @UseInterceptors(FileInterceptor('file'))
-  async updateFilePatch(
-    @Body() body: { key: string },
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    const key = body.key;
-    if (!key) {
-      throw new RpcException('File key is missing in body');
+  @MessagePattern('files.update')
+  async updateFile(@Payload() data: UpdateFilePayload) {
+    if (!data.key) {
+      throw new RpcException('File key is missing');
     }
-    this.logger.log(`✅ Received HTTP PATCH request to update file: ${key}`);
+    this.logger.log(
+      `✅ Received TCP PATCH request to update file: ${data.key}`,
+    );
+    const file = this.reconstructFile(data.file);
     this.validateFile(file);
-    const result = await this.fileService.updateFile(key, file);
+    const result = await this.fileService.updateFile(data.key, file);
     this.logger.log(`✅ File updated successfully: ${result.key}`);
     return result;
   }
 
-  @Get()
-  async getFileQuery(@Query('key') key: string) {
-    if (!key) {
-      throw new RpcException('File key is missing in query params');
+  @MessagePattern('files.get')
+  async getFile(@Payload() data: FileKeyPayload) {
+    if (!data.key) {
+      throw new RpcException('File key is missing');
     }
-    this.logger.log(`Received HTTP GET request (query) for file: ${key}`);
-    return this.fileService.getFile(key);
+    this.logger.log(`Received TCP GET request for file: ${data.key}`);
+    return this.fileService.getFile(data.key);
   }
 
-  @Delete()
-  async deleteFileQuery(@Query('key') key: string) {
-    if (!key) {
-      throw new RpcException('File key is missing in query params');
+  @MessagePattern('files.delete')
+  async deleteFile(@Payload() data: FileKeyPayload) {
+    if (!data.key) {
+      throw new RpcException('File key is missing');
     }
-    this.logger.log(`Received HTTP DELETE request (query) for file: ${key}`);
-    return this.fileService.deleteFile(key);
+    this.logger.log(`Received TCP DELETE request for file: ${data.key}`);
+    return this.fileService.deleteFile(data.key);
+  }
+
+  private reconstructFile(filePayload: FilePayload): Express.Multer.File {
+    return {
+      buffer: Buffer.from(filePayload.buffer, 'base64'),
+      originalname: filePayload.originalname,
+      mimetype: filePayload.mimetype,
+      size: filePayload.size,
+      fieldname: 'file',
+      encoding: '7bit',
+      stream: null as unknown as import('stream').Readable,
+      destination: '',
+      filename: '',
+      path: '',
+    };
   }
 
   private validateFile(file: Express.Multer.File) {
