@@ -49,13 +49,14 @@ export class FileService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    if (!this.autoCreateBucket) return;
-
-    const exists = await this.minio.bucketExists(this.bucket);
-    if (!exists) {
-      await this.minio.makeBucket(this.bucket);
-      this.logger.log(`🪣 MinIO bucket "${this.bucket}" created`);
+    if (this.autoCreateBucket) {
+      const exists = await this.minio.bucketExists(this.bucket);
+      if (!exists) {
+        await this.minio.makeBucket(this.bucket);
+        this.logger.log(`🪣 MinIO bucket "${this.bucket}" created`);
+      }
     }
+    this.logger.log('✅ FileService connected to MinIO');
   }
 
   private getExt(originalname: string): string {

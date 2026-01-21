@@ -1,8 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
-export class IndexerService {
+export class IndexerService implements OnModuleInit {
   private readonly logger = new Logger(IndexerService.name);
+
+  onModuleInit() {
+    this.logger.log('✅ IndexerService initialized');
+  }
 
   deleteJob(data: unknown) {
     this.logger.log(`Deleting job: ${JSON.stringify(data)}`);
