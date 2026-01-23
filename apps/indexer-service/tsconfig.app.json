@@ -1,8 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/apps/indexer",
-    "module": "nodenext",
+    "outDir": "../../dist/apps/indexer-service",
     "declaration": false,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -13,6 +12,6 @@
     "baseUrl": "../../",
     "skipLibCheck": true
   },
-  "include": ["indexer.src/**/*"],
+  "include": ["indexer/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
