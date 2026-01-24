@@ -31,8 +31,8 @@
     "indexer": {
       "type": "application",
       "root": "apps/indexer-service",
-      "entryFile": "indexer-service.main",
-      "sourceRoot": "apps/indexer-service/indexer",
+      "entryFile": "main",
+      "sourceRoot": "apps/indexer-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/indexer-service/tsconfig.app.json"
       }
