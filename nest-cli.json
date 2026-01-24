@@ -30,11 +30,11 @@
     },
     "indexer": {
       "type": "application",
-      "root": "apps/indexer",
-      "entryFile": "indexer.main",
-      "sourceRoot": "apps/indexer/indexer.src",
+      "root": "apps/indexer-service",
+      "entryFile": "indexer-service.main",
+      "sourceRoot": "apps/indexer-service/indexer",
       "compilerOptions": {
-        "tsConfigPath": "apps/indexer/tsconfig.app.json"
+        "tsConfigPath": "apps/indexer-service/tsconfig.app.json"
       }
     },
     "jobs-service": {
