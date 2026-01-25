@@ -1,10 +1,10 @@
-export class JobUpsertedEventDto {
+import { CreateOrUpdateJobDto } from './create-or-update-job.dto';
+
+export class JobUpsertedEventDto extends CreateOrUpdateJobDto {
   operation: 'created' | 'updated';
-  id: number;
-  externalId: string;
+  jobId: number;
 }
 
-export class JobDeletedEventDto {
-  id: number;
-  externalId: string;
+export class JobDeletedEventDto extends CreateOrUpdateJobDto {
+  jobId: number;
 }

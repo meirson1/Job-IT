@@ -59,8 +59,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
 
     this.kafkaClient.emit('job.upserted', {
       operation,
-      id: job.id,
-      externalId: job.externalId,
+      jobId: job.id,
     });
 
     return job;
@@ -71,8 +70,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     await this.prisma.job.delete({ where: { id } });
 
     this.kafkaClient.emit('job.deleted', {
-      id: job.id,
-      externalId: job.externalId,
+      jobId: job.id,
     });
 
     return { ok: true };

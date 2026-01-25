@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { IndexerController } from './indexer-service.controller.js';
 import { IndexerService } from './indexer-service.service.js';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { PrismaModule } from '@app/database';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ElasticsearchModule } from '@nestjs/elasticsearch';
       }),
       inject: [ConfigService],
     }),
+    PrismaModule,
   ],
   controllers: [IndexerController],
   providers: [IndexerService],
