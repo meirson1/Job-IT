@@ -28,7 +28,7 @@
         "tsConfigPath": "apps/file-service/tsconfig.app.json"
       }
     },
-    "indexer": {
+    "indexer-service": {
       "type": "application",
       "root": "apps/indexer-service",
       "entryFile": "main",
