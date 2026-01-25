@@ -97,23 +97,7 @@ services:
     networks:
       - jobit-net
 
-  logstash:
-    image: logstash:9.2.0
-    container_name: logstash
-    ports:
-      - '5044:5044'
-      - '9600:9600'
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - XPACK_MONITORING_ENABLED=false
-    depends_on:
-      - elasticsearch
-      - kafka
-    volumes:
-      - logstash_data:/usr/share/logstash/data
-      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
-    networks:
-      - jobit-net
+
 
 volumes:
   postgres_data:
@@ -121,7 +105,7 @@ volumes:
   kafka_data:
   elasticsearch_data:
   kibana_data:
-  logstash_data:
+
 
 networks:
   jobit-net:
