@@ -1,53 +1,18 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { JobUpsertedEventDto, JobDeletedEventDto } from '@app/shared';
+import {
+  JobUpsertedEventDto,
+  JobDeletedEventDto,
+  JOB_INDEX,
+  JOB_INDEX_MAPPING,
+} from '@app/shared';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { PrismaService, Job } from '@app/database';
-
-const JOB_INDEX = 'jobs';
-
-const JOB_INDEX_MAPPING = {
-  properties: {
-    title: { type: 'text' },
-    description: { type: 'text' },
-    location: { type: 'text' },
-
-    companyName: {
-      type: 'text',
-      fields: { keyword: { type: 'keyword' } },
-    },
-
-    salaryMin: { type: 'integer' },
-    salaryMax: { type: 'integer' },
-    salaryCurrency: { type: 'keyword' },
-
-    promoted: { type: 'boolean' },
-    source: { type: 'keyword' },
-    url: { type: 'keyword', ignore_above: 2048 },
-
-    role: { type: 'keyword' },
-
-    requirements: { type: 'text' },
-    responsibilities: { type: 'text' },
-    benefits: { type: 'text' },
-
-    workplaceType: { type: 'keyword' },
-    employmentType: { type: 'keyword' },
-    experienceLevel: { type: 'keyword' },
-
-    externalId: { type: 'keyword' },
-    createdAt: { type: 'date' },
-    updatedAt: { type: 'date' },
-  },
-} as const;
 
 @Injectable()
 export class IndexerService implements OnModuleInit {
   private readonly logger = new Logger(IndexerService.name);
+  private readonly MAX_RETRIES = 3;
 
-  constructor(
-    private readonly elasticsearchService: ElasticsearchService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly elasticsearchService: ElasticsearchService) {}
 
   async onModuleInit() {
     this.logger.log('✅ IndexerService initialized');
@@ -59,11 +24,7 @@ export class IndexerService implements OnModuleInit {
       index: JOB_INDEX,
     });
 
-    const exists =
-      typeof indexExists === 'boolean'
-        ? indexExists
-        : ((indexExists as unknown as { valueOf: () => boolean }).valueOf?.() ??
-          indexExists);
+    const exists = Boolean(indexExists);
 
     if (!exists) {
       this.logger.log('Mapping not found, creating...');
@@ -82,74 +43,82 @@ export class IndexerService implements OnModuleInit {
         index: JOB_INDEX,
         id: event.jobId.toString(),
       });
-      this.logger.log(`Successfully deleted job ${event.jobId}`);
+      this.logger.log(`✅ Successfully deleted job ${event.jobId}`);
     } catch (error) {
-      const err = error as Error;
-      this.logger.error(`Failed to delete job ${event.jobId}: ${err.message}`);
-    }
-  }
+      const err = error as { statusCode?: number; message: string };
 
-  async indexJob(event: JobUpsertedEventDto) {
-    this.logger.log(`Indexing job: ${JSON.stringify(event)}`);
-    try {
-      const job = await this.prisma.job.findUnique({
-        where: {
-          id: event.jobId,
-        },
-        include: {
-          company: true,
-        },
-      });
-
-      if (!job) {
-        this.logger.warn(
-          `Job ${event.jobId} not found in DB - skipping indexing`,
+      if (err.statusCode === 404) {
+        this.logger.log(
+          `Job ${event.jobId} already deleted from Elasticsearch`,
         );
         return;
       }
 
-      const document = this.mapToDocument(job);
-
-      await this.elasticsearchService.index({
-        index: JOB_INDEX,
-        id: job.id.toString(),
-        document,
-      });
-      this.logger.log(`Successfully indexed job ${job.id}`);
-    } catch (error) {
-      const err = error as Error;
-      this.logger.error(`Failed to index job ${event.jobId}: ${err.message}`);
+      this.logger.error(`Failed to delete job ${event.jobId}: ${err.message}`);
     }
   }
 
-  private mapToDocument(job: Job & { company: { name: string } | null }) {
+  async indexJob(event: JobUpsertedEventDto, retryCount = 0): Promise<void> {
+    this.logger.log(`Indexing job: ${JSON.stringify(event)}`);
+    try {
+      const document = this.mapEventToDocument(event);
+
+      await this.elasticsearchService.index({
+        index: JOB_INDEX,
+        id: event.jobId.toString(),
+        document,
+      });
+
+      this.logger.log(
+        `✅ Successfully indexed job ${event.jobId} (${event.operation})`,
+      );
+    } catch (error) {
+      const err = error as Error;
+
+      if (retryCount < this.MAX_RETRIES) {
+        const delay = Math.pow(2, retryCount) * 1000;
+        this.logger.warn(
+          `Retry ${retryCount + 1}/${this.MAX_RETRIES} for job ${event.jobId} after ${delay}ms`,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return this.indexJob(event, retryCount + 1);
+      }
+
+      this.logger.error(
+        `❌ Failed to index job ${event.jobId} after ${this.MAX_RETRIES} retries: ${err.message}`,
+      );
+    }
+  }
+
+  private mapEventToDocument(event: JobUpsertedEventDto) {
     return {
-      title: job.title,
-      description: job.description,
-      location: job.location,
-      companyName: job.company?.name ?? null,
+      title: event.title,
+      description: event.description,
+      location: event.location,
+      companyName: event.companyName ?? null,
 
-      salaryMin: job.salaryMin ?? null,
-      salaryMax: job.salaryMax ?? null,
-      salaryCurrency: job.salaryCurrency ?? null,
+      salaryMin: event.salaryMin ?? null,
+      salaryMax: event.salaryMax ?? null,
+      salaryCurrency: event.salaryCurrency ?? null,
 
-      promoted: job.promoted ?? false,
-      source: job.source,
-      url: job.url ?? null,
+      promoted: event.promoted ?? false,
+      source: event.source,
+      url: event.url ?? null,
 
-      role: job.role ?? null,
+      role: event.role ?? null,
 
-      requirements: job.requirements,
-      responsibilities: job.responsibilities,
-      benefits: job.benefits ?? null,
+      requirements: event.requirements,
+      responsibilities: event.responsibilities,
+      benefits: event.benefits ?? null,
 
-      workplaceType: job.workplaceType,
-      employmentType: job.employmentType,
-      experienceLevel: job.experienceLevel,
+      workplaceType: event.workplaceType,
+      employmentType: event.employmentType,
+      experienceLevel: event.experienceLevel,
 
-      externalId: job.externalId,
-      createdAt: job.createdAt,
-      updatedAt: job.updatedAt,
+      externalId: event.externalId,
+      createdAt: event.createdAt,
+      updatedAt: event.updatedAt,
     };
   }
 }
