@@ -36,6 +36,13 @@ export class IndexerService implements OnModuleInit {
     }
   }
 
+  private isIdempotentError(statusCode?: number): boolean {
+    const IDEMPOTENT_STATUS_CODES = [404, 410];
+    return (
+      statusCode !== undefined && IDEMPOTENT_STATUS_CODES.includes(statusCode)
+    );
+  }
+
   async deleteJob(event: JobDeletedEventDto) {
     this.logger.log(`Deleting job: ${JSON.stringify(event)}`);
     try {
@@ -47,7 +54,7 @@ export class IndexerService implements OnModuleInit {
     } catch (error) {
       const err = error as { statusCode?: number; message: string };
 
-      if (err.statusCode === 404) {
+      if (this.isIdempotentError(err.statusCode)) {
         this.logger.log(
           `Job ${event.jobId} already deleted from Elasticsearch`,
         );
