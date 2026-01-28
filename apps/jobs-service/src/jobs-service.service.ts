@@ -57,10 +57,41 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       update: this.toData({ ...dto, externalId }),
     });
 
+    const completeJob = await this.prisma.job.findUnique({
+      where: { id: job.id },
+      include: { company: true },
+    });
+
+    if (!completeJob) {
+      this.logger.error(
+        `Job ${job.id} not found after upsert - this should never happen`,
+      );
+      return job;
+    }
+
     this.kafkaClient.emit('job.upserted', {
       operation,
-      id: job.id,
-      externalId: job.externalId,
+      jobId: completeJob.id,
+      title: completeJob.title,
+      description: completeJob.description,
+      location: completeJob.location,
+      companyName: completeJob.company?.name ?? null,
+      salaryMin: completeJob.salaryMin,
+      salaryMax: completeJob.salaryMax,
+      salaryCurrency: completeJob.salaryCurrency,
+      promoted: completeJob.promoted ?? false,
+      source: completeJob.source,
+      url: completeJob.url,
+      role: completeJob.role,
+      requirements: completeJob.requirements,
+      responsibilities: completeJob.responsibilities,
+      benefits: completeJob.benefits,
+      workplaceType: completeJob.workplaceType,
+      employmentType: completeJob.employmentType,
+      experienceLevel: completeJob.experienceLevel,
+      externalId: completeJob.externalId,
+      createdAt: completeJob.createdAt,
+      updatedAt: completeJob.updatedAt,
     });
 
     return job;
@@ -71,8 +102,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     await this.prisma.job.delete({ where: { id } });
 
     this.kafkaClient.emit('job.deleted', {
-      id: job.id,
-      externalId: job.externalId,
+      jobId: job.id,
     });
 
     return { ok: true };

@@ -27,5 +27,6 @@
       "@app/shared": ["libs/shared/src"],
       "@app/shared/*": ["libs/shared/src/*"]
     }
-  }
+  },
+  "exclude": ["node_modules", "dist", "apps/web"]
 }

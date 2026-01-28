@@ -1,5 +1,5 @@
 {
-  "name": "JobIT",
+  "name": "job-it",
   "workspaces": [
     "apps/*",
     "libs/*"
@@ -22,11 +22,13 @@
     "start:file": "nest start file-service",
     "start:file:dev": "nest start file-service --watch",
     "start:job": "nest start jobs-service",
-    "start:job:dev": "npx prisma migrate reset && npx prisma migrate dev && nest start jobs-service --watch",
+    "start:job:dev": "npx prisma migrate reset --force && npx prisma migrate dev && nest start jobs-service --watch",
+    "start:indexer": "nest start indexer-service",
+    "start:indexer:dev": "nest start indexer-service --watch",
     "start:dev": "nest start auth-service --watch",
     "start:debug": "nest start auth-service --debug --watch",
     "web:dev": "npm run dev --prefix apps/web",
-    "start:all": "concurrently -n AUTH,FILE,JOB,WEB -c auto \"npm run start:auth:dev\" \"npm run start:file:dev\" \"npm run start:job:dev\" \"npm run web:dev\"",
+    "start:all": "concurrently -n AUTH,FILE,JOB,INDEX,WEB -c auto \"npm run start:auth:dev\" \"npm run start:file:dev\" \"npm run start:job:dev\" \"npm run start:indexer:dev\" \"npm run web:dev\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.{ts,tsx}\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -35,9 +37,11 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^9.2.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/elasticsearch": "^11.1.0",
     "@nestjs/microservices": "^11.1.12",
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/adapter-pg": "^7.2.0",
