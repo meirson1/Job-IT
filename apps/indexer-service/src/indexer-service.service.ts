@@ -11,7 +11,6 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 export class IndexerService implements OnModuleInit {
   private readonly logger = new Logger(IndexerService.name);
   private readonly MAX_RETRIES = 3;
-  private readonly RETRY_BASE_DELAY_MS = 1000;
 
   constructor(private readonly elasticsearchService: ElasticsearchService) {}
 
@@ -99,18 +98,27 @@ export class IndexerService implements OnModuleInit {
       const err = error as Error;
 
       if (retryCount < this.MAX_RETRIES) {
-        const delay = this.calculateRetryDelay(retryCount);
         this.logger.warn(
-          `Retry ${retryCount + 1}/${this.MAX_RETRIES} for job ${event.jobId} after ${delay}ms`,
+          `Failed to index job ${event.jobId}, checking ES health before retry ${retryCount + 1}/${this.MAX_RETRIES}`,
         );
 
-        await this.sleep(delay);
+        const isHealthy = await this.checkElasticsearchHealth();
+
+        if (!isHealthy) {
+          this.logger.error(
+            `❌ Elasticsearch is unhealthy, failing job ${event.jobId} for Kafka redelivery`,
+          );
+          throw error;
+        }
+
+        this.logger.log('Elasticsearch is healthy, retrying immediately...');
         return this.indexJob(event, retryCount + 1);
       }
 
       this.logger.error(
         `❌ Failed to index job ${event.jobId} after ${this.MAX_RETRIES} retries: ${err.message}`,
       );
+      throw error;
     }
   }
 
@@ -145,11 +153,20 @@ export class IndexerService implements OnModuleInit {
     };
   }
 
-  private calculateRetryDelay(retryCount: number): number {
-    return Math.pow(2, retryCount) * this.RETRY_BASE_DELAY_MS;
-  }
+  private async checkElasticsearchHealth(): Promise<boolean> {
+    try {
+      const health = await this.elasticsearchService.cluster.health({
+        timeout: '5s',
+      });
 
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+      const status = health.status;
+      this.logger.log(`Elasticsearch cluster health: ${status}`);
+
+      return status === 'green' || status === 'yellow';
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to check Elasticsearch health: ${err.message}`);
+      return false;
+    }
   }
 }
