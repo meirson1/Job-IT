@@ -11,6 +11,7 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 export class IndexerService implements OnModuleInit {
   private readonly logger = new Logger(IndexerService.name);
   private readonly MAX_RETRIES = 3;
+  private readonly RETRY_BASE_DELAY_MS = 1000;
 
   constructor(private readonly elasticsearchService: ElasticsearchService) {}
 
@@ -33,6 +34,21 @@ export class IndexerService implements OnModuleInit {
         mappings: JOB_INDEX_MAPPING,
       });
       this.logger.log(`✅ Created "${JOB_INDEX}" index with mapping`);
+      return;
+    }
+
+    try {
+      this.logger.log('Index exists, checking if mapping needs update...');
+      await this.elasticsearchService.indices.putMapping({
+        index: JOB_INDEX,
+        properties: JOB_INDEX_MAPPING.properties,
+      });
+      this.logger.log(`✅ Mapping verified/updated for "${JOB_INDEX}" index`);
+    } catch (error) {
+      const err = error as { message: string };
+      this.logger.error(
+        `Failed to update mapping for "${JOB_INDEX}": ${err.message}`,
+      );
     }
   }
 
@@ -83,12 +99,12 @@ export class IndexerService implements OnModuleInit {
       const err = error as Error;
 
       if (retryCount < this.MAX_RETRIES) {
-        const delay = Math.pow(2, retryCount) * 1000;
+        const delay = this.calculateRetryDelay(retryCount);
         this.logger.warn(
           `Retry ${retryCount + 1}/${this.MAX_RETRIES} for job ${event.jobId} after ${delay}ms`,
         );
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await this.sleep(delay);
         return this.indexJob(event, retryCount + 1);
       }
 
@@ -127,5 +143,13 @@ export class IndexerService implements OnModuleInit {
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
     };
+  }
+
+  private calculateRetryDelay(retryCount: number): number {
+    return Math.pow(2, retryCount) * this.RETRY_BASE_DELAY_MS;
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
