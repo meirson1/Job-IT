@@ -9,10 +9,6 @@ export const JOB_INDEX_MAPPING = {
     responsibilities: { type: 'text' },
 
     location: { type: 'text' },
-    companyName: {
-      type: 'text',
-      fields: { keyword: { type: 'keyword' } },
-    },
 
     salaryMin: { type: 'integer' },
     salaryMax: { type: 'integer' },

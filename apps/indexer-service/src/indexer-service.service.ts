@@ -130,7 +130,6 @@ export class IndexerService implements OnModuleInit {
       responsibilities: event.responsibilities,
 
       location: event.location,
-      companyName: event.companyName ?? null,
 
       salaryMin: event.salaryMin ?? null,
       salaryMax: event.salaryMax ?? null,
