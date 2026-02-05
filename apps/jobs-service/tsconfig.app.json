@@ -11,8 +11,7 @@
     "target": "ES2021",
     "sourceMap": true,
     "baseUrl": "../../",
-    "skipLibCheck": true
   },
-  "include": ["jobs.service.src/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

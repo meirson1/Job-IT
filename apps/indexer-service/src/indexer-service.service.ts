@@ -126,28 +126,20 @@ export class IndexerService implements OnModuleInit {
     return {
       title: event.title,
       description: event.description,
+      requirements: event.requirements,
+      responsibilities: event.responsibilities,
+
       location: event.location,
       companyName: event.companyName ?? null,
 
       salaryMin: event.salaryMin ?? null,
       salaryMax: event.salaryMax ?? null,
-      salaryCurrency: event.salaryCurrency ?? null,
-
-      promoted: event.promoted ?? false,
-      source: event.source,
-      url: event.url ?? null,
-
-      role: event.role ?? null,
-
-      requirements: event.requirements,
-      responsibilities: event.responsibilities,
-      benefits: event.benefits ?? null,
 
       workplaceType: event.workplaceType,
       employmentType: event.employmentType,
       experienceLevel: event.experienceLevel,
 
-      externalId: event.externalId,
+      promoted: event.promoted ?? false,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
     };
