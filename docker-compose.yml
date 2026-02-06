@@ -69,6 +69,27 @@ services:
     networks:
       - jobit-net
 
+  kafka-init:
+    image: apache/kafka:3.7.2
+    container_name: kafka-init
+    depends_on:
+      - kafka
+    entrypoint: ['/bin/sh', '-c']
+    command: |
+      "
+      echo 'Waiting for Kafka to be ready...'
+      sleep 10
+      
+      echo 'Creating topics...'
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:29092 --topic job.upserted --partitions 1 --replication-factor 1
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:29092 --topic job.deleted --partitions 1 --replication-factor 1
+      
+      echo 'Topics created successfully!'
+      "
+    networks:
+      - jobit-net
+    restart: on-failure
+
   elasticsearch:
     image: elasticsearch:9.2.0
     container_name: elasticsearch

@@ -125,20 +125,14 @@ export class IndexerService implements OnModuleInit {
   private mapEventToDocument(event: JobUpsertedEventDto) {
     return {
       title: event.title,
-      description: event.description,
       requirements: event.requirements,
-      responsibilities: event.responsibilities,
 
       location: event.location,
-
-      salaryMin: event.salaryMin ?? null,
-      salaryMax: event.salaryMax ?? null,
 
       workplaceType: event.workplaceType,
       employmentType: event.employmentType,
       experienceLevel: event.experienceLevel,
 
-      promoted: event.promoted ?? false,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
     };
