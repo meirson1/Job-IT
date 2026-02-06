@@ -22,26 +22,26 @@
     "file-service": {
       "type": "application",
       "root": "apps/file-service",
-      "entryFile": "file-service.main",
-      "sourceRoot": "apps/file-service/file.service.src",
+      "entryFile": "main",
+      "sourceRoot": "apps/file-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/file-service/tsconfig.app.json"
       }
     },
-    "indexer": {
+    "indexer-service": {
       "type": "application",
-      "root": "apps/indexer",
-      "entryFile": "indexer.main",
-      "sourceRoot": "apps/indexer/indexer.src",
+      "root": "apps/indexer-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/indexer-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/indexer/tsconfig.app.json"
+        "tsConfigPath": "apps/indexer-service/tsconfig.app.json"
       }
     },
     "jobs-service": {
       "type": "application",
       "root": "apps/jobs-service",
-      "entryFile": "jobs-service.main",
-      "sourceRoot": "apps/jobs-service/jobs.service.src",
+      "entryFile": "main",
+      "sourceRoot": "apps/jobs-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/jobs-service/tsconfig.app.json"
       }

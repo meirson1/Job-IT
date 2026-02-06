@@ -1,0 +1,157 @@
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  JobUpsertedEventDto,
+  JobDeletedEventDto,
+  JOB_INDEX,
+  JOB_INDEX_MAPPING,
+} from '@app/shared';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
+
+@Injectable()
+export class IndexerService implements OnModuleInit {
+  private readonly logger = new Logger(IndexerService.name);
+  private readonly MAX_RETRIES = 3;
+
+  constructor(private readonly elasticsearchService: ElasticsearchService) {}
+
+  async onModuleInit() {
+    this.logger.log('✅ IndexerService initialized');
+    await this.checkMapping();
+  }
+
+  async checkMapping() {
+    const indexExists = await this.elasticsearchService.indices.exists({
+      index: JOB_INDEX,
+    });
+
+    const exists = Boolean(indexExists);
+
+    if (!exists) {
+      this.logger.log('Mapping not found, creating...');
+      await this.elasticsearchService.indices.create({
+        index: JOB_INDEX,
+        mappings: JOB_INDEX_MAPPING,
+      });
+      this.logger.log(`✅ Created "${JOB_INDEX}" index with mapping`);
+      return;
+    }
+
+    try {
+      this.logger.log('Index exists, checking if mapping needs update...');
+      await this.elasticsearchService.indices.putMapping({
+        index: JOB_INDEX,
+        properties: JOB_INDEX_MAPPING.properties,
+      });
+      this.logger.log(`✅ Mapping verified/updated for "${JOB_INDEX}" index`);
+    } catch (error) {
+      const err = error as { message: string };
+      this.logger.error(
+        `Failed to update mapping for "${JOB_INDEX}": ${err.message}`,
+      );
+    }
+  }
+
+  private isIdempotentError(statusCode?: number): boolean {
+    const IDEMPOTENT_STATUS_CODES = [404, 410];
+    return (
+      statusCode !== undefined && IDEMPOTENT_STATUS_CODES.includes(statusCode)
+    );
+  }
+
+  async deleteJob(event: JobDeletedEventDto) {
+    this.logger.log(`Deleting job: ${JSON.stringify(event)}`);
+    try {
+      await this.elasticsearchService.delete({
+        index: JOB_INDEX,
+        id: event.jobId.toString(),
+      });
+      this.logger.log(`✅ Successfully deleted job ${event.jobId}`);
+    } catch (error) {
+      const err = error as { statusCode?: number; message: string };
+
+      if (this.isIdempotentError(err.statusCode)) {
+        this.logger.log(
+          `Job ${event.jobId} already deleted from Elasticsearch`,
+        );
+        return;
+      }
+
+      this.logger.error(`Failed to delete job ${event.jobId}: ${err.message}`);
+    }
+  }
+
+  async indexJob(event: JobUpsertedEventDto, retryCount = 0): Promise<void> {
+    this.logger.log(`Indexing job: ${JSON.stringify(event)}`);
+    try {
+      const document = this.mapEventToDocument(event);
+
+      await this.elasticsearchService.index({
+        index: JOB_INDEX,
+        id: event.jobId.toString(),
+        document,
+      });
+
+      this.logger.log(
+        `✅ Successfully indexed job ${event.jobId} (${event.operation})`,
+      );
+    } catch (error) {
+      const err = error as Error;
+
+      if (retryCount < this.MAX_RETRIES) {
+        this.logger.warn(
+          `Failed to index job ${event.jobId}, checking ES health before retry ${retryCount + 1}/${this.MAX_RETRIES}`,
+        );
+
+        const isHealthy = await this.checkElasticsearchHealth();
+
+        if (!isHealthy) {
+          this.logger.error(
+            `❌ Elasticsearch is unhealthy, failing job ${event.jobId} for Kafka redelivery`,
+          );
+          throw error;
+        }
+
+        this.logger.log('Elasticsearch is healthy, retrying immediately...');
+        return this.indexJob(event, retryCount + 1);
+      }
+
+      this.logger.error(
+        `❌ Failed to index job ${event.jobId} after ${this.MAX_RETRIES} retries: ${err.message}`,
+      );
+      throw error;
+    }
+  }
+
+  private mapEventToDocument(event: JobUpsertedEventDto) {
+    return {
+      title: event.title,
+      requirements: event.requirements,
+
+      location: event.location,
+
+      workplaceType: event.workplaceType,
+      employmentType: event.employmentType,
+      experienceLevel: event.experienceLevel,
+
+      createdAt: event.createdAt,
+      updatedAt: event.updatedAt,
+    };
+  }
+
+  private async checkElasticsearchHealth(): Promise<boolean> {
+    try {
+      const health = await this.elasticsearchService.cluster.health({
+        timeout: '5s',
+      });
+
+      const status = health.status;
+      this.logger.log(`Elasticsearch cluster health: ${status}`);
+
+      return status === 'green' || status === 'yellow';
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to check Elasticsearch health: ${err.message}`);
+      return false;
+    }
+  }
+}

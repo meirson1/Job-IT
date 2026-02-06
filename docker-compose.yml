@@ -69,10 +69,64 @@ services:
     networks:
       - jobit-net
 
+  kafka-init:
+    image: apache/kafka:3.7.2
+    container_name: kafka-init
+    depends_on:
+      - kafka
+    entrypoint: ['/bin/sh', '-c']
+    command: |
+      "
+      echo 'Waiting for Kafka to be ready...'
+      sleep 10
+      
+      echo 'Creating topics...'
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:29092 --topic job.upserted --partitions 1 --replication-factor 1
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:29092 --topic job.deleted --partitions 1 --replication-factor 1
+      
+      echo 'Topics created successfully!'
+      "
+    networks:
+      - jobit-net
+    restart: on-failure
+
+  elasticsearch:
+    image: elasticsearch:9.2.0
+    container_name: elasticsearch
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - jobit-net
+
+  kibana:
+    image: kibana:9.2.0
+    container_name: kibana
+    ports:
+      - '5601:5601'
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+    networks:
+      - jobit-net
+
+
+
 volumes:
   postgres_data:
   minio_data:
   kafka_data:
+  elasticsearch_data:
+  kibana_data:
+
 
 networks:
   jobit-net:

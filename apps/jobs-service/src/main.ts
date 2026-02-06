@@ -1,12 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { IndexerModule } from './indexer-service.module.js';
+import { JobsServiceModule } from './jobs-service.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(IndexerModule);
+  const app = await NestFactory.create(JobsServiceModule);
   const config = app.get(ConfigService);
-  const port = config.get<number>('INDEXER_SERVICE_PORT') || 3004;
+  const port = config.get<number>('JOB_PORT') || 3003;
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -18,6 +18,6 @@ async function bootstrap() {
 
   await app.listen(port);
 
-  console.log(`Indexer Service is running on: http://localhost:${port}`);
+  console.log(`Jobs Service is running on: http://localhost:${port}`);
 }
 void bootstrap();
